@@ -32,3 +32,30 @@ services:
       - kafka
     #not to crash
     restart: unless-stopped
+  
+  redis:
+    image: redis:7.0-alpine
+    container_name: sre-redis
+    ports:
+      - "6379:6379"
+
+  #comsumer.
+  telemetry-consumer:
+    build:
+      context: ../consumer
+      dockerfile: Dockerfile
+    container_name: sre-python-consumer
+    depends_on:
+      - kafka
+      - redis
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sre-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_INSTALL_PLUGINS=redis-datasource
+    depends_on:
+      - redis
