@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  telemetry-agent:
+    #to build it, redis and kafka
+    build:
+      context: ../agent
+      dockerfile: Dockerfile
+    container_name: sre-c-agent
+    #not to crash
+    restart: unless-stopped
