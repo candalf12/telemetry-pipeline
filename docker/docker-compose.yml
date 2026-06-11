@@ -59,3 +59,18 @@ services:
       - GF_INSTALL_PLUGINS=redis-datasource
     depends_on:
       - redis
+  db:
+    image: postgres:15-alpine
+    container_name: sre-postgres
+    environment:
+      POSTGRES_USER: sre_user
+      POSTGRES_PASSWORD: sre_password
+      POSTGRES_DB: telemetry_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  postgres_data:
