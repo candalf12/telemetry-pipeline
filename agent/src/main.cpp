@@ -45,7 +45,7 @@ double getMemoryUsage() {
         return -1.0;
     }
 
-    // calculate actual memory usage
+    // calculate actual memaory usage
     long actuallyUsedMem = totalMem - (freeMem + buffers + cached);
     double usagePercent = (static_cast<double>(actuallyUsedMem) / totalMem) * 100.0;
 
@@ -75,7 +75,8 @@ int main() {
     cout << "Kafka has connected to broker (" << brokers << ")" << endl;
     // infinite loop for real-time monitoring
     while (true) {
-        double ramUsage = getMemoryUsage();
+        // double ramUsage = getMemoryUsage();
+        double ramUsage = 80.5; //for the sake of testing.
         
         if (ramUsage >= 0.0) {
             //target data

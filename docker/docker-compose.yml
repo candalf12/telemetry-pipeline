@@ -56,6 +56,12 @@ services:
     ports:
       - "3000:3000"
     environment:
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=smtp.gmail.com:587
+      - GF_SMTP_USER=mehmetcanbastemm97@gmail.com
+      - GF_SMTP_PASSWORD=hyni gmtw hqze nxuu
+      - GF_SMTP_FROM_ADDRESS=mehmetcanbastemm97@gmail.com
+      - GF_SMTP_FROM_NAME=SRE Telemetry Alarm
       - GF_INSTALL_PLUGINS=redis-datasource
     depends_on:
       - db
