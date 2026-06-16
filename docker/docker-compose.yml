@@ -58,7 +58,10 @@ services:
     environment:
       - GF_INSTALL_PLUGINS=redis-datasource
     depends_on:
+      - db
       - redis
+    volumes:
+      - grafana_data:/var/lib/grafana
   db:
     image: postgres:15-alpine
     container_name: sre-postgres
@@ -71,6 +74,9 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ../database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ../database:/database
+      - ../exports:/exports
 
 volumes:
   postgres_data:
+  grafana_data:
