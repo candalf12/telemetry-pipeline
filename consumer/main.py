@@ -3,10 +3,15 @@ import redis
 import psycopg2
 import time
 from confluent_kafka import Consumer
-
+from elasticsearch import Elasticsearch
+from datetime import datetime
 #connection to redis.
 r = redis.Redis(host='redis', port=6379, db=0, decode_responses=True)
-
+try:
+    es = Elasticsearch("http://sre-elasticsearch:9200")
+    print("Elasticsearch connection is succesfull.")
+except Exception as e:
+    print(f"Elasticsearch bağlantı hatası: {e}")
 while True:
     try:
         db_conn = psycopg2.connect(
@@ -64,6 +69,11 @@ try:
             (ram_usage,)
         )
         db_conn.commit()
+        data["@timestamp"] = datetime.utcnow().isoformat()
+        try:
+            es.index(index="system-metrics", document=data)
+        except Exception as e:
+            print(f"ES yazma hatası: {e}")
 
         print(f" Redis is cached, postgres has been written to: {ram_usage}%")        
         print(f"Redis works, agent:ram_usage -> {ram_usage}%")

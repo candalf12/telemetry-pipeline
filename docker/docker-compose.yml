@@ -54,7 +54,7 @@ services:
     image: grafana/grafana:latest
     container_name: sre-grafana
     ports:
-      - "127.0.0.1:3000:3000"
+      - "3000:3000"
     environment:
       - GF_SMTP_ENABLED=true
       - GF_SMTP_HOST=smtp.gmail.com:587
@@ -82,7 +82,29 @@ services:
       - ../database/init.sql:/docker-entrypoint-initdb.d/init.sql
       - ../database:/database
       - ../exports:/exports
+  sre-elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: sre-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    networks:
+      - default
 
+  sre-kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: sre-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://sre-elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - sre-elasticsearch
+    networks:
+      - default
 volumes:
   postgres_data:
   grafana_data:
