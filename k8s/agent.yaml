@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sre-agent-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sre-agent
+  template:
+    metadata:
+      labels:
+        app: sre-agent
+    spec:
+      containers:
+      - name: agent
+        image: sre-agent:latest
+        imagePullPolicy: Never 
+        env:
+        - name: KAFKA_BROKER
+          value: "sre-kafka:9092"
+        - name: REDIS_HOST
+          value: "sre-redis"
+        - name: REDIS_PORT
+          value: "6379"

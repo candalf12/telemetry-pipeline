@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <unistd.h>
+#include <cstdlib> 
 #include <librdkafka/rdkafkacpp.h>
 
 using namespace std;
@@ -56,11 +57,15 @@ int main() {
     cout << "SRE Telemetry Agent Started..." << endl;
     string errstr;
     string brokers = "kafka:29092";
+    if (const char* env_p = std::getenv("KAFKA_BROKER")) {
+        brokers = env_p;
+        cout << "Kubernetes environment variable found. Broker set to: " << brokers << endl;
+    }
     string topic_name = "system_metrics";
 
     RdKafka::Conf* conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
     if (conf->set("bootstrap.servers", brokers, errstr) != RdKafka::Conf::CONF_OK) {
-        cerr << "[HATA] Kafka ayarlari yapilamadi: " << errstr << endl;
+        cerr << "Kafka ayarlari yapilamadi: " << errstr << endl;
         return 1;
     }
 

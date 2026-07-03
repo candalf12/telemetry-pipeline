@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sre-consumer-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sre-consumer
+  template:
+    metadata:
+      labels:
+        app: sre-consumer
+    spec:
+      containers:
+      - name: consumer
+        image: sre-consumer:latest
+        imagePullPolicy: Never 
+        env:
+        - name: REDIS_HOST         
+          value: "sre-redis"
+        - name: KAFKA_BROKER
+          value: "sre-kafka:9092"
+        - name: PG_HOST
+          value: "sre-postgres"
+        - name: PG_PORT
+          value: "5432"
+        - name: PG_USER
+          value: "postgres"
+        - name: PG_PASSWORD
+          value: "password"
+        - name: PG_DB
+          value: "telemetry"

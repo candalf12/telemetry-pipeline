@@ -1,3 +1,4 @@
+import os
 import json
 import redis
 import psycopg2
@@ -12,18 +13,33 @@ try:
     print("Elasticsearch connection is succesfull.")
 except Exception as e:
     print(f"Elasticsearch bağlantı hatası: {e}")
+
+REDIS_HOST = os.environ.get('REDIS_HOST', 'redis')
+REDIS_PORT = int(os.environ.get('REDIS_PORT', 6379))
+
+PG_HOST = os.environ.get('PG_HOST', 'db')
+PG_PORT = os.environ.get('PG_PORT', '5432')
+PG_USER = os.environ.get('PG_USER', 'sre_user')
+PG_PASSWORD = os.environ.get('PG_PASSWORD', 'sre_password')
+PG_DB = os.environ.get('PG_DB', 'telemetry_db')
+
+KAFKA_BROKER = os.environ.get('KAFKA_BROKER', 'kafka:29092')
+
+r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, decode_responses=True)
+
 while True:
     try:
         db_conn = psycopg2.connect(
-            host="db",
-            database="telemetry_db",
-            user="sre_user",
-            password="sre_password"
+            host=PG_HOST,
+            port=PG_PORT,
+            database=PG_DB,
+            user=PG_USER,
+            password=PG_PASSWORD
         )
         cursor = db_conn.cursor()
         break
-    except psycopg2.OperationalError:
-        print("Postgres not ready yet.")
+    except psycopg2.OperationalError as e:
+        print(f"Postgres not ready yet. Error: {e}")
         time.sleep(2)
 
 cursor.execute("""
@@ -35,16 +51,15 @@ cursor.execute("""
 """)
 db_conn.commit()
 print("PostgreSQL connection has been established.")
-#kafka's ports
+
 conf = {
-    'bootstrap.servers': 'kafka:29092',
-    'group.id': 'sre-telemetry-group', # consumer's name.
-    'auto.offset.reset': 'latest'      # reading the mru value.
+    'bootstrap.servers': KAFKA_BROKER,
+    'group.id': 'sre-telemetry-group', 
+    'auto.offset.reset': 'latest'      
 }
 
 consumer = Consumer(conf)
 consumer.subscribe(['system_metrics'])
-
 
 try:
     while True:
@@ -53,16 +68,13 @@ try:
         if msg is None: 
             continue
         if msg.error():
-            print(f"Redis offline: {msg.error()}")
+            print(f"Kafka error: {msg.error()}")
             continue
 
         raw_data = msg.value().decode('utf-8')
-        # Jfrom json to phyton readable form.
         data = json.loads(raw_data)
         ram_usage = data['ram_usage_percent']
         
-        # reads to Redis.
-        # change the value continously.
         r.set('agent:ram_usage', ram_usage)
         cursor.execute(
             "INSERT INTO system_metrics (ram_usage) VALUES (%s);",
@@ -75,11 +87,13 @@ try:
         except Exception as e:
             print(f"ES yazma hatası: {e}")
 
-        print(f" Redis is cached, postgres has been written to: {ram_usage}%")        
-        print(f"Redis works, agent:ram_usage -> {ram_usage}%")
+        print(f"Redis is cached, postgres has been written to: {ram_usage}%")        
 
 except KeyboardInterrupt:
     pass
 finally:
     #shut down the connection of kafka.
     consumer.close()
+    consumer.close()
+    if 'db_conn' in locals():
+        db_conn.close()
